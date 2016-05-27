@@ -130,7 +130,7 @@ namespace HSFScheduler
 		        if(access.Task != null)
                 {
 				    count += AllStates.timesCompletedTask(access.Task);
-			        if(count >= 1)// access.Task.MaxTimesToPerform)
+			        if(count >= 1) //access.Task.MaxTimesToPerform)
 				        return false;
 		        }
 	        }
@@ -183,20 +183,34 @@ namespace HSFScheduler
             return elem1.ScheduleValue > elem2.ScheduleValue;
         }
 
-        public static void WriteSchedule(SystemSchedule schedule, String scheduleWritePath)
+        public static void WriteSchedule(SystemSchedule schedule, SystemClass system, string scheduleWritePath)
         {
             var csv = new StringBuilder();
+            System.IO.Directory.CreateDirectory(scheduleWritePath);
+            string fileName = "";
+
+            Dictionary<Asset, Stack<Task>> targetData = new Dictionary<Asset, Stack<Task>>();
+
+            foreach (var asset in system.Assets)
+            {
+                foreach (var ev in schedule.AllStates.Events)
+                {
+                    Target target = ev.Tasks[asset].Target;
+                    Matrix<double> targetLLA = target.DynamicState.InitialConditions();
+
+                    csv.AppendLine(target.ToString());
+                }
+                fileName = asset.Name + "_targetData";
+                System.IO.File.WriteAllText(scheduleWritePath + "\\" + fileName + ".csv", csv.ToString());
+            }
+
             Dictionary<StateVarKey<double>, SortedList<double, double>> stateTimeDData = new Dictionary<StateVarKey<double>, SortedList<double, double>>();
             Dictionary<StateVarKey<int>, SortedList<double, int>> stateTimeIData = new Dictionary<StateVarKey<int>, SortedList<double, int>>();
             Dictionary<StateVarKey<bool>, SortedList<double, bool>> stateTimeBData = new Dictionary<StateVarKey<bool>, SortedList<double, bool>>();
             Dictionary<StateVarKey<Matrix<double>>, SortedList<double, Matrix<double>>> stateTimeMData = new Dictionary<StateVarKey<Matrix<double>>, SortedList<double, Matrix<double>>>();
 
-            string stateTimeData = "Time,";
-            string stateData = "";
             csv.Clear();
-
             SystemState sysState = schedule.AllStates.Events.Peek().State;
-            
 
             while (sysState != null)
             {
@@ -244,12 +258,8 @@ namespace HSFScheduler
                         else if (!stateTimeMData[kvpMatrixProfile.Key].ContainsKey(data.Key))
                             stateTimeMData[kvpMatrixProfile.Key].Add(data.Key, data.Value);
 
-
                 sysState = sysState.Previous;
-
             }
-
-            System.IO.Directory.CreateDirectory(scheduleWritePath);
 
             foreach(var list in stateTimeDData)
                 writeStateVariable(list, scheduleWritePath);
@@ -280,12 +290,16 @@ namespace HSFScheduler
             foreach (char c in invalidChars)
                 fileName = fileName.Replace(c, '_');
 
-            csv.AppendLine("time" + "," + fileName);
             foreach (var k in list.Value)
                 csv.AppendLine(k.Key + "," + k.Value);
 
             System.IO.File.WriteAllText(scheduleWritePath + "\\" + fileName + ".csv", csv.ToString());
             csv.Clear();
+        }
+
+        public override string ToString()
+        {
+            return getTotalNumEvents().ToString();
         }
     }
 }
