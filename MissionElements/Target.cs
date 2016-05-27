@@ -59,7 +59,7 @@ namespace MissionElements
 
         public override string ToString()
         {
-            return Name;
+            return Name + "," + Type + "," + Value + "," + DynamicState.InitialConditions()[1, 1] + "," + DynamicState.InitialConditions()[2, 1] + "," + DynamicState.InitialConditions()[3, 1];
         }
     }
 

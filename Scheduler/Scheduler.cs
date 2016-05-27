@@ -125,8 +125,12 @@ namespace HSFScheduler
 
                 // Check if it's necessary to crop the systemSchedule list to a more managable number
                 if (systemSchedules.Count > _maxNumSchedules)
+                {
                     CropSchedules(systemSchedules, ScheduleEvaluator, emptySchedule);
+                    systemSchedules.Add(emptySchedule);
+                }
 
+                
                 // Create a new system schedule list by adding each of the new Task commands for the Assets onto each of the old schedules
                 // Start timing
                 // Generate an exhaustive list of new tasks possible from the combinations of Assets and Tasks
@@ -137,6 +141,10 @@ namespace HSFScheduler
                 foreach (var oldSystemSchedule in systemSchedules)
                 {
                     var oldSched = oldSystemSchedule;
+                    var newSched = new SystemSchedule(oldSched);
+                    if(newSched.AllStates.Events.Count != 0)
+                        potentialSystemSchedules.Add(newSched);
+                    
                     foreach (var newAccessStack in scheduleCombos)
                     {
                         if (oldSched.CanAddTasks(newAccessStack, currentTime))
@@ -176,6 +184,7 @@ namespace HSFScheduler
                     ts.Milliseconds / 10);
                 Console.WriteLine("Parallel Scheduler RunTime: " + elapsedTime);
                 */
+                
                 foreach (var potentialSchedule in potentialSystemSchedules)
                 {
                     if (Checker.CheckSchedule(system, potentialSchedule))
@@ -183,7 +192,7 @@ namespace HSFScheduler
                     //dependencies.updateStates(newSchedule.getEndStates());
                     //systemCanPerformList.Push(system.canPerform(potentialSchedule));
                 }
-
+                
                 // Merge old and new systemSchedules
                 systemSchedules.InsertRange(0, systemCanPerformList);//<--This was potentialSystemSchedules
                 potentialSystemSchedules.Clear();
@@ -251,17 +260,18 @@ namespace HSFScheduler
             // Delete the sysScheds that don't fit
             int j = 0;
             int numSched = schedulesToCrop.Count;
-            for(int i = 0; i< numSched-_maxNumSchedules; i++)
-            {
-                //if (schedulesToCrop[i] != emptySched)
-                //{
-                    schedulesToCrop.Remove(schedulesToCrop[0]);
+            //for(int i = 0; i< numSched-_maxNumSchedules; i++)
+            //{
+            //if (schedulesToCrop[i] != emptySched)
+            //{
+            schedulesToCrop.RemoveRange(0, numSched - _maxNumSchedules);
+                    //schedulesToCrop.Remove(schedulesToCrop[0]);
                 //}
                 //else
                 //{
                 //    i--;
                 //}
-            }
+            //}
         }
 
         /// <summary>

@@ -178,7 +178,7 @@ namespace Horizon
             {
                 foreach (SystemSchedule sched in schedules)
                 {
-                    sw.WriteLine("Schedule Number: " + i + "Schedule Value: " + schedules[i].ScheduleValue);
+                    sw.WriteLine("Schedule Number: " + i + " Schedule Value: " + schedules[i].ScheduleValue);
                     foreach (var eit in sched.AllStates.Events)
                     {
                         if (eit.Tasks.Values.GetType().Equals(TaskType.COMM))
@@ -196,22 +196,22 @@ namespace Horizon
             }
 
             ////Mehiel's way
-            string stateDataFilePath = @"..\..\..\" + string.Format("output-{0:yyyy-MM-dd-hh-mm-ss}", DateTime.Now);
-            SystemSchedule.WriteSchedule(schedules[0], stateDataFilePath);
+            string stateDataFilePath = @"..\..\..\results\" + string.Format("output-{0:yyyy-MM-dd-hh-mm-ss}", DateTime.Now);
+            SystemSchedule.WriteSchedule(schedules[0], simSystem, stateDataFilePath);
 
             var csv = new StringBuilder();
             csv.Clear();
             foreach (var asset in simSystem.Assets)
             {
-                File.WriteAllText(@"..\..\..\" + asset.Name + "_dynamicStateData.csv", asset.AssetDynamicState.ToString());
+                File.WriteAllText(stateDataFilePath + "\\" + asset.Name + "_dynamicStateData.csv", asset.AssetDynamicState.ToString());
             }
 
             //   Console.ReadKey();
-     
+
 
                 // *********************************Output selected data*************************************
-             //   bool schedOutput = dataOut.writeAll(schedules, simSystem);
-            // ******************************************************************************************
+                //   bool schedOutput = dataOut.writeAll(schedules, simSystem);
+                // ******************************************************************************************
         }
     }
 }

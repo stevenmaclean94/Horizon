@@ -59,7 +59,8 @@ namespace MissionElements
         /// <summary>
         /// New Event with a deep copy of the state.
         /// </summary>
-        /// <param name="eventToCopyExactly"></param>
+        /// <param name="eventToCopyExactly"></param> 
+        /*
         public Event(Event eventToCopyExactly)
         {
             Tasks = eventToCopyExactly.Tasks;
@@ -69,6 +70,7 @@ namespace MissionElements
             TaskStarts = DeepCopy.Copy(eventToCopyExactly.TaskStarts);
             TaskEnds = DeepCopy.Copy(eventToCopyExactly.TaskEnds);
         }
+        */
         #endregion
 
         #region Accessors
@@ -162,9 +164,10 @@ namespace MissionElements
             string eventString = "";
             foreach(var assetTask in Tasks)
             {
-                eventString += assetTask.Key.Name + ":\t" + assetTask.Value.Target.ToString()+ "\t";
-                eventString += "Task Start:\t" + GetTaskStart(assetTask.Key) + "\tEvent Start:\t" + GetEventStart(assetTask.Key) + "\t"; 
-                eventString+= "Task End:\t" + GetTaskEnd(assetTask.Key) + "\tEvent End:\t" + GetEventEnd(assetTask.Key);
+                eventString += assetTask.Key.Name + ":\t";
+                eventString += assetTask.Value.Target.ToString()+ "\t" + assetTask.Value.Target.Value + "\t";
+                eventString += "Task Start:\t" + GetTaskStart(assetTask.Key) + "\tEvent Start:\t" + GetEventStart(assetTask.Key) + "\t";
+                eventString += "Task End:\t" + GetTaskEnd(assetTask.Key) + "\tEvent End:\t" + GetEventEnd(assetTask.Key);
             }
 
             return eventString;
