@@ -19,6 +19,7 @@ namespace HSFSchedulerUnitTest
         [TestMethod]
         public void GenerateSchedulesUnitTest()
         {
+            /*
             // Get the input filenames
             //string simulationInputFilePath = args[1];
             //string targetDeckFilePath = args[2];
@@ -217,6 +218,7 @@ namespace HSFSchedulerUnitTest
             TargetValueEvaluator scheduleEvaluator = new TargetValueEvaluator(dependencies);
 
             systemScheduler.GenerateSchedules(system, systemTasks, initialSysState, scheduleEvaluator);
+            */
         }
     }
 }

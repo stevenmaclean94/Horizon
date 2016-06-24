@@ -9,6 +9,7 @@ using Utilities;
 using HSFSystem;
 using UserModel;
 using MissionElements;
+using HSFUniverse;
 
 namespace HSFScheduler
 {
