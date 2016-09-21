@@ -24,22 +24,53 @@ namespace UtilitiesUnitTest
         }
 
         [TestMethod]
-        public void MatrixCatTest()
+        public void MatrixVertCatTest()
         {
+            // Create Test Matricies.
             Matrix<double> A = new Matrix<double>(2, 3, 1);
             Matrix<double> B = new Matrix<double>(2, 3, 2);
 
-            Matrix<double> C = Matrix<double>.Vertcat(A, B);
+            // Create Correct Answer.
+            Matrix<double> C = new Matrix<double>(new double[,] { { 1, 1, 1 }, { 1, 1, 1 }, { 2, 2, 2 }, { 2, 2, 2 } });
 
+            // Test Method.
+            Matrix<double> D = Matrix<double>.Vertcat(A, B);
+
+            // Verify Result.
+            Assert.AreEqual(C, D);
+        }
+
+        [TestMethod]
+        public void MatrixHorizCatTest()
+        {
+            // Create Test Matrices.
+            Matrix<double> A = new Matrix<double>(new double[,] { { 1, 1, 1 }, { 1, 1, 1 } });
+            Matrix<double> B = new Matrix<double>(new double[,] { { 2, 2, 2 }, { 2, 2, 2 } });
+
+            // Create correct answer.
+            Matrix<double> C = new Matrix<double>(new double[,] { { 1, 1, 1, 2, 2, 2 }, { 1, 1, 1, 2, 2, 2 } });
+
+            // Test Method.
+            Matrix<double> D = Matrix<double>.Horzcat(A, B);
+
+            // Verify Result  .       
+            Assert.AreEqual(C, D);
         }
 
         [TestMethod]
         public void MatrixCumProdTest()
         {
+            // Create Test Matrix.
             Matrix<double> A = new Matrix<double>(new double[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
 
+            // Create Correct Answer.
+            Matrix<double> C = new Matrix<double>(new double[,] { { 1, 2, 3 }, { 4, 10, 18 }, { 28, 80, 162 } });
+
+            //Test Method.
             Matrix<double> B = Matrix<double>.Cumprod(A);
-//            Assert.AreEqual(B, A);
+
+            //Verify Result.
+            Assert.AreEqual(C, B);
         }
 
         [TestMethod]
@@ -51,7 +82,6 @@ namespace UtilitiesUnitTest
 
             Assert.AreEqual(B, A);
         }
-
         [TestMethod]
         public void MatrixDeepCopyTest()
         {
