@@ -1002,7 +1002,7 @@ namespace Utilities
                 return System.Math.Sqrt((dynamic)temp);
             }
             else
-                throw new NotImplementedException("Matrix<T>.Norm(Matrix<T> A)");
+                throw new NotImplementedException("Norm only operates on row or column matricies");
         }
 
         public static Matrix<T> Cumprod(Matrix<T> A)

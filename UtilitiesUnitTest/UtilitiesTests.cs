@@ -22,7 +22,7 @@ namespace UtilitiesUnitTest
 
             Console.ReadLine();
         }
-
+        [TestCategory("Matrix")]
         [TestMethod]
         public void MatrixVertCatTest()
         {
@@ -72,9 +72,40 @@ namespace UtilitiesUnitTest
             //Verify Result.
             Assert.AreEqual(C, B);
         }
+        [TestMethod]
+        public void MatrixMultiply()
+        {
+            Matrix<double> A = new Matrix<double>(new double[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+            Matrix<double> B = new Matrix<double>(new double[,] { { 1, 1, 3 }, { 4, 2, 6 }, { 7, 3, 9 } });
+
+            Matrix<double> C = A * B;
+
+            Matrix<double> D = new Matrix<double>(new double[,] { { 30, 14, 42 }, { 66, 32, 96 }, { 102, 50, 150 } });
+
+            Assert.AreEqual(D, C);
+        }
 
         [TestMethod]
-        public void InsertRowTest()
+        public void MatrixNormTest()
+        {
+            Matrix<double> A = new Matrix<double>(new double[,] { { 1, 2, 3 } });
+            double normActual = Matrix<double>.Norm(A);
+            double normExpected = 3.7417;
+            Assert.AreEqual(normExpected, normActual, 0.0001);
+        }
+
+
+        [TestMethod]
+        public void MatrixSetColumnTest()
+        {
+            Matrix<double> A = new Matrix<double>(new double[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+            A.SetColumn(2, new Matrix<double>(new double[,] { { 1 }, { 2 }, { 3 } }));
+            Matrix<double> B = new Matrix<double>(new double[,] { { 1, 1, 3 }, { 4, 2, 6 }, { 7, 3, 9 } });
+
+            Assert.AreEqual(B, A);
+        }
+        [TestMethod]
+        public void MatrixSetRowTest()
         {
             Matrix<double> A = new Matrix<double>(new double[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
             A.SetRow(2, new Matrix<double>(new double[,] { { 1, 2, 3 } }));
@@ -92,6 +123,28 @@ namespace UtilitiesUnitTest
             Assert.AreEqual(B, A);
         }
 
+
+        [TestMethod]
+        public void MatrixToArrayTest()
+        {
+            // Create Test Matrices.
+            Matrix<double> A = new Matrix<double>(new double[,] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
+
+            // Create correct answer.
+            double[,] B = new double[3, 3] { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
+
+            // Test Method.
+            double[,] C = A.ToArray();
+
+            // Verify Result.
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    Assert.AreEqual(B.GetValue(i, j), C.GetValue(i, j));
+                }
+            }
+        }
         [TestMethod]
         public void DeepCopyTest()
         {
