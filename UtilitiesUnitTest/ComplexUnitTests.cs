@@ -190,6 +190,16 @@ namespace UtilitiesUnitTest
             Assert.AreEqual(expected, result);
         }
         [TestMethod]
+        public void ComplexExp()
+        {
+            Complex<double> complex1 = new Complex<double>(1, 4);
+            Complex<double> result = Complex<double>.Exp(complex1);
+            Complex<double> expected = new Complex<double>(-1.7768, -2.0572);
+
+            Assert.AreEqual(expected.Re, result.Re, 0.0001);
+            Assert.AreEqual(expected.Im, result.Im, 0.0001);
+        }
+        [TestMethod]
         public void ComplexMax()
         {
             Complex<double> complex1 = new Complex<double>(-1, -3);
