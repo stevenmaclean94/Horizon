@@ -177,7 +177,10 @@ namespace Utilities
 
         public static bool operator <=(Complex<T> c1, Complex<T> c2)
         {
-            return !(c1 >= c2);
+            if (Complex<T>.Abs(c1) == Complex<T>.Abs(c2))
+                return (Complex<T>.Angle(c1) <= Complex<T>.Angle(c2));
+            else
+                return (Complex<T>.Abs(c1) <= Complex<T>.Abs(c2));
         }
 
         /// <summary>
@@ -220,6 +223,10 @@ namespace Utilities
         /// <returns></returns>
         public static explicit operator T(Complex<T> d1)
         {
+            if (d1.IsImaginary())
+            {
+                throw new InvalidOperationException("Number is not purely real");
+            }
             return d1.Re;
         }
 
