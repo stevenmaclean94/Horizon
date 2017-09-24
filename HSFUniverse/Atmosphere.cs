@@ -456,20 +456,19 @@ namespace HSFUniverse
             return 0.0;
         }
     }
-
     public class HorizontalWindModel14
     {
-        [DllImport(@"C:\Users\steve\Desktop\HWM\hwm14.dll", CallingConvention = CallingConvention.StdCall)]
-        private static extern void hwm14([In] int iyd, [In] float sec, [In]  float alt, [In] float glat, [In] float glon, [In] float stl, [In] float f107a, [In] float f107,  [In] float ap, [Out] float w);
+        [DllImport(@"C:\Users\steve\Downloads\HWM14\HWM\bin\Debug\HWM.dll", CallingConvention = CallingConvention.StdCall)]
+        private static extern void hwm14_([In] int iyd, [In] float sec, [In]  float alt, [In] float glat, [In] float glon, [In] float stl, [In] float f107a, [In] float f107, [In] float ap1, float ap2, [Out] float w);
         public static Vector hwm14Interface(int iyd, float sec, float alt, float glat, float glon, float stl, float[] ap)
         {
             //inithwm();
             float[] w = new float[2];
+            float w1 = 0;
             float f107a = 100;
             float f107 = 100;
-            hwm14( iyd,  sec, alt, glat, glon, stl, f107a, f107, 0, 0);
-            return new Vector(new List<double>(new double[]{ 0, Convert.ToDouble(w[1]) }));
+            hwm14_(iyd, sec, alt, glat, glon, stl, f107a, f107, ap[0], ap[1], w1);
+            return new Vector(new List<double>(new double[] { 0, Convert.ToDouble(w[1]) }));
         }
     }
-            
 }

@@ -89,26 +89,4 @@ namespace HSFUniverse.Tests
             Assert.AreEqual("2017012006_025", ((string)obj.GetFieldOrProperty("_gfscode")));
         }
     }
-
-    [TestClass]
-    public class HWMTest
-    {
-        /*
-        [TestMethod]
-        public void TestWind()
-        {
-            int day = 95000+150;
-            float ut = 12;
-            float alt = 0;
-            float glat = -45;
-            float glon = -85;
-            float stl = 6;
-            float[] ap = { 0, 80 };
-            //float ap = 80;
-            Vector wind = HorizontalWindModel14.hwm14Interface(day, ut, alt, glat, glon, stl, ap);
-            Assert.AreEqual(0.031, wind[1]);
-            Assert.AreEqual(6.271, wind[2]);
-        }
-        */
-    }
 }
