@@ -84,8 +84,8 @@ namespace HSFUniverse
 
             int nmax0, mmax0;
 
-            qwm = new QWM(this);
-            dwm = new DWM(out nmaxdwm, out mmaxdwm, this);
+            qwm = new QWM();
+            dwm = new DWM(out nmaxdwm, out mmaxdwm);
 
             nmaxgeo = Math.Max(nmaxhwm, nmaxqdc);
             mmaxgeo = Math.Max(omaxhwm, mmaxqdc);
@@ -95,13 +95,6 @@ namespace HSFUniverse
 
             ALF(nmax0, mmax0);
 
-            // shared for QWM and DWM, no need to compute twice
-            gpbar = new Matrix<double>(nmaxgeo, mmaxgeo);
-            gvbar = new Matrix<double>(nmaxgeo, mmaxgeo);
-            gwbar = new Matrix<double>(nmaxgeo, mmaxgeo);
-            spbar = new Matrix<double>(nmaxgeo, mmaxgeo);
-            svbar = new Matrix<double>(nmaxgeo, mmaxgeo);
-            swbar = new Matrix<double>(nmaxgeo, mmaxgeo);
 
         }
         public Vector hwm14(int iyd, double sec, double alt, double glat, double glon, double stl, double f107a, double f107, Vector ap)
@@ -120,7 +113,7 @@ namespace HSFUniverse
 
             return w;
         }
-        public static void alfbasis(int nmax, int mmax, double theta, ref Matrix<double> P, ref Matrix<double> V, ref Matrix<double> W)
+        public static void alfbasis(int nmax, int mmax, double theta, out Matrix<double> P, out Matrix<double> V, out Matrix<double> W)
         {
             // -------------------------------------------------------------
             // routine to compute vector spherical harmonic basis functions
@@ -129,7 +122,9 @@ namespace HSFUniverse
             int n, m;
             double x, y;
             double p00 = 0.70710678118654746;
-
+            P = new Matrix<double>(nmax, mmax);
+            V = new Matrix<double>(nmax, mmax);
+            W = new Matrix<double>(nmax, mmax);
             P[1, 1] = p00;
             x = Math.Cos(theta);
             y = Math.Sin(theta);
@@ -191,7 +186,7 @@ namespace HSFUniverse
                 {
                     marr[m+1] = m;
                     cm[m+1] = Math.Sqrt((double)(2 * m + 1) /(2 * m * m * (m + 1)));
-                    for (n = m + 1; n <= nmax0-1; n++)
+                    for (n = m + 1; n <= nmax0; n++)
                     {
                         anm[n+1, m+1] = Math.Sqrt((double)((2 * n - 1) * (2 * n + 1) * (n - 1)) / ((n - m) * (n + m) * (n + 1)));
                         bnm[n+1, m+1] = Math.Sqrt((double)((2 * n + 1) * (n + m - 1) * (n - m - 1) * (n - 2) * (n - 1))
@@ -233,7 +228,7 @@ namespace HSFUniverse
             Matrix<double> fs, fm, fl;
             public Vector bz, bm;
 
-            Matrix<double> zwght;
+            Vector zwght;
             int lev;
 
             int cseason = 0;
@@ -243,15 +238,15 @@ namespace HSFUniverse
             bool[] content = Enumerable.Repeat(true, 5).ToArray();      // Season/Waves/Tides
             bool[] component = Enumerable.Repeat(true, 2).ToArray();    // Compute zonal/meridional
 
-            string qwmdefault = "hwm123114.bin";
-            bool qwminit = true;
+            //string qwmdefault = "hwm123114.bin";
+            //bool qwminit = true;
 
             Vector wavefactor = new Vector(new List<double>(new double[] { 1.0, 1.0, 1.0, 1.0 }));
             Vector tidefactor = new Vector(new List<double>(new double[] { 1.0, 1.0, 1.0, 1.0 }));
 
-            HWM parent;
+            //HWM parent;
 
-            public QWM(HWM hwm)
+            public QWM()
             {
                 int i, j;
 
@@ -289,9 +284,9 @@ namespace HSFUniverse
                 }
                 // Set transition levels
 
-                alttns = vnode[nlev - 2];
-                altsym = vnode[nlev - 1];
-                altiso = vnode[nlev];
+                alttns = vnode[nlev - 1];
+                altsym = vnode[nlev];
+                altiso = vnode[nlev+1];
 
                 // Allocate the global store of quasi-static parameters
 
@@ -309,7 +304,7 @@ namespace HSFUniverse
                 // change the initalization flag and reset some other things
 
                 previous = new Vector(new List<double>(new double[] { -1, -1, -1, -1, -1 }));
-                parent = hwm;
+                //parent = hwm;
 
             }
             public Vector hwmqt(int IYD, double SEC, double ALT, double GLAT, double GLON, double STL, double F107A, double F107)
@@ -323,8 +318,6 @@ namespace HSFUniverse
                 Vector input = new Vector(5);
                 double u, v;
                 double cs, ss, cm, sm, cl, sl;
-                double cmcs, smcs, cmss, smss;
-                double clcs, slcs, clss, slss;
                 double AA, BB, CC, DD;
                 double vb, wb;
                 double theta, sc;
@@ -402,7 +395,7 @@ namespace HSFUniverse
                 if (input[4] != glatalf)
                 {
                     AA = (90.0 - input[4]) * deg2rad;    // theta = colatitude in radians
-                    alfbasis(maxn, maxm, AA, ref gpbar, ref gvbar, ref gwbar);
+                    alfbasis(maxn, maxm, AA, out gpbar, out gvbar, out gwbar);
                     refresh[1] = true;
                     refresh[2] = true;
                     refresh[3] = true;
@@ -415,7 +408,7 @@ namespace HSFUniverse
 
                 if (input[5] != previous[5])
                 {
-                    vertwght(input[5], ref zwght, ref lev);
+                    vertwght(input[5], out zwght, out lev);
                     previous[5] = input[5];
                 }
 
@@ -586,11 +579,11 @@ namespace HSFUniverse
 
                     if (component[0])
                     {
-                            u = u + zwght[1, b] * Matrix<double>.Dot(bz[new MatrixIndex(1, c)], mparm[new MatrixIndex(1, c), d]);
+                            u = u + zwght[b] * Matrix<double>.Dot(bz[new MatrixIndex(1, c)], mparm[new MatrixIndex(1, c), d]);
                     }
                     if (component[1])
                     {
-                            v = v + zwght[1, b] * Matrix<double>.Dot(bz[new MatrixIndex(1,c)], tparm[new MatrixIndex(1, c), d]);
+                            v = v + zwght[b] * Matrix<double>.Dot(bz[new MatrixIndex(1,c)], tparm[new MatrixIndex(1, c), d]);
                     }
 
                 }
@@ -600,7 +593,7 @@ namespace HSFUniverse
                 return w;
 
             }
-            private void vertwght(double alt, ref Matrix<double> wght, ref int iz)
+            private void vertwght(double alt, out Vector wght, out int iz)
             {
 
                 //real[8],intent(in)      :: alt
@@ -609,13 +602,14 @@ namespace HSFUniverse
 
                 //real[8]             :: we(0:4)
                 Vector we = new Vector(5);
-
+                iz = 0;
+                wght = new Vector(4);
                 iz = findspan(nnode - p - 1, p, alt, vnode) - p;
-                iz = Math.Min(iz, 26);
+                iz = Math.Min(iz, 27);
 
                 wght[1] = bspline(p, nnode, vnode, iz, alt);
                 wght[2] = bspline(p, nnode, vnode, iz + 1, alt);
-                if (iz <= 25)
+                if (iz <= 26)
                 {
                     wght[3] = bspline(p, nnode, vnode, iz + 2, alt);
                     wght[4] = bspline(p, nnode, vnode, iz + 3, alt);
@@ -692,7 +686,7 @@ namespace HSFUniverse
                 return N[1];
 
             }
-            private int findspan(int n, int p, double u, Matrix<double> V)
+            private int findspan(int n, int p, double u, Vector V)
             {
                 // =====================================================
                 // Function to locate the knot span
@@ -704,7 +698,7 @@ namespace HSFUniverse
 
                 low = p;
                 high = n + 1;
-                mid = (low + high) / 2;
+                mid = (low + high) / 2+1;
 
                 while (u < V[mid] || u >= V[mid + 1])
                 {
@@ -841,11 +835,17 @@ namespace HSFUniverse
 
             public static double sineps = 0.39781868;
             double deg2rad = Math.PI / 180;
-
+            double mltlast = 1e16, mlatlast = 1e16, kplast = 1e16;
+            double glatlast = 1.0e16, glonlast = 1.0e16;
+            double daylast = 1.0e16, utlast = 1.0e16, aplast = 1.0e16;
+            double day, ut, mlat, mlon, mlt, kp;
+            double f1e, f1n, f2e, f2n;
+            double talt = 125.0;
+            Vector kpterms = new Vector(3);
             gd2qdc gd;
-            HWM parent;
+            //HWM parent;
 
-            public DWM(out int nmaxout, out int mmaxout, HWM hwm)
+            public DWM(out int nmaxout, out int mmaxout)
             {
                 nterm = HWMData.dwm.nterm;
                 mmax = HWMData.dwm.mmax;
@@ -863,46 +863,35 @@ namespace HSFUniverse
                 nmaxout = nmax;
                 mmaxout = mmax;
 
-                gd = new gd2qdc(hwm);
 
-                parent = hwm;
+                gd = new gd2qdc();
+
+                //parent = hwm;
             }
             public Vector dwm07(int iyd, double sec, double alt, double glat, double glon, Vector ap)
             {
                 Vector dw = new Vector(2);
-                double day, ut, mlat, mlon, mlt, kp;
+                
                 double mmpwind, mzpwind;
-                double f1e, f1n, f2e, f2n;
-                double glatlast = 1.0e16, glonlast = 1.0e16;
-                double daylast = 1.0e16, utlast = 1.0e16, aplast = 1.0e16;
-                double talt = 125.0; 
+                
+                
+                
 
                 //CONVERT AP TO KP
                 if (ap[2] != aplast)
                     kp = ap2kp(ap[2]);
-                else
-                    kp = 0; // FIXME
+
 
                 //CONVERT GEO LAT/LON TO QD LAT/LON
                 if ((glat != glatlast) || (glon != glonlast))
                     gd.gd2qd(glat, glon, out mlat, out mlon, out f1e, out f1n, out f2e, out f2n);
-                else
-                {
-                    mlat = 0;
-                    mlon = 0;
-                    f1e = 0;
-                    f1n = 0;
-                    f2e = 0;
-                    f2n = 0;
-                }
+
 
                 //COMPUTE QD MAGNETIC LOCAL TIME(LOW-PRECISION)
                 day = iyd % 1000;
                 ut = sec / 3600.0;
                 if ((day != daylast) || (ut != utlast) || (glat != glatlast) || (glon != glonlast))
                     mlt = gd.mltcalc(mlat, mlon, day, ut);
-                else
-                    mlt = 0; //FIXME
 
                 //RETRIEVE DWM WINDS
                 Dwm07b(mlt, mlat, kp, out mmpwind, out mzpwind);
@@ -928,9 +917,7 @@ namespace HSFUniverse
                 // Local variables
                 int iterm, ivshterm, n, m;
                 Vector termvaltemp;
-                Vector kpterms;
                 double latwgtterm;
-                double mltlast = 1e16, mlatlast = 1e16, kplast = 1e16;
                 double theta, phi, mphi;
                 mmpwind = 0;
                 mzpwind = 0;
@@ -939,7 +926,7 @@ namespace HSFUniverse
                 if (mlat != mlatlast)
                 {
                     theta = (90 - (mlat)) * deg2rad;
-                    alfbasis(nmax-1, mmax-1, theta, ref dpbar, ref dvbar, ref dwbar);
+                    alfbasis(nmax, mmax, theta, out dpbar, out dvbar, out dwbar);
                 }
 
                 //COMPUTE MLT PART OF VSH TERMS
@@ -948,7 +935,7 @@ namespace HSFUniverse
                     phi = (mlt) * deg2rad * 15;
                     for (m = 1; m <= mmax + 1; m++)
                     {
-                        mphi = (m + 1) * phi;
+                        mphi = (m - 1) * phi;
                         mltterms[m, 1] = Math.Cos(mphi);
                         mltterms[m, 2] = Math.Sin(mphi);
                     }
@@ -958,14 +945,14 @@ namespace HSFUniverse
                 if ((mlat != mlatlast) || (mlt != mltlast))
                 {
                     ivshterm = 1;
-                    for (n = 1; n <= nmax; n++)
+                    for (n = 2; n <= nmax+1; n++)
                     {
                         vshterms[1, ivshterm] = -(dvbar[n, 1] * mltterms[1, 1]);
                         vshterms[1, ivshterm + 1] = (dwbar[n, 1] * mltterms[1, 1]);
                         vshterms[2, ivshterm] = -vshterms[1, ivshterm + 1];
                         vshterms[2, ivshterm + 1] = vshterms[1, ivshterm];
                         ivshterm = ivshterm + 2;
-                        for (m = 1; m <= mmax; m++)
+                        for (m = 2; m <= mmax+1; m++)
                         {
                             if (m > n)
                                 continue;
@@ -985,8 +972,7 @@ namespace HSFUniverse
                 //COMPUTE KP TERMS
                 if (kp != kplast)
                     kpterms = kpspl3(kp);
-                else
-                    kpterms = new Vector(3);
+                    
 
                 //COMPUTE LATITUDINAL WEIGHTING TERM
                 latwgtterm = latwgt2(mlat, mlt, kp, twidth);
@@ -998,7 +984,7 @@ namespace HSFUniverse
                     if (termarr[1, iterm] != 999)
                     {
                         termvaltemp[1] = termvaltemp[1] * vshterms[1, termarr[1, iterm]+1];
-                        termvaltemp[2] = termvaltemp[2] * vshterms[1, termarr[1, iterm]+1];
+                        termvaltemp[2] = termvaltemp[2] * vshterms[2, termarr[1, iterm]+1];
                     }
                     if (termarr[2, iterm] != 999)
                         termvaltemp = termvaltemp * kpterms[termarr[2, iterm]+1];
@@ -1045,9 +1031,9 @@ namespace HSFUniverse
                         kpspl[i] = kpspl[i] * (x - node[i]) / (node[i + j - 1] - node[i]) + kpspl[i + 1] * (node[i + j] - x) / (node[i + j] - node[i + 1]);
                     }
                 }
-                kpterms[1] = kpspl[1] + kpspl[2];
-                kpterms[2] = kpspl[3];
-                kpterms[3] = kpspl[4] + kpspl[5];
+                kpterms[1] = kpspl[0] + kpspl[1];
+                kpterms[2] = kpspl[2];
+                kpterms[3] = kpspl[3] + kpspl[4];
 
                 return kpterms;
 
@@ -1122,9 +1108,9 @@ namespace HSFUniverse
 
             static double deg2rad = Math.PI / 180.0;
 
-            HWM parent;
+            //HWM parent;
 
-            public gd2qdc(HWM hwm)
+            public gd2qdc()
             {
 
                 int iterm, n;
@@ -1162,7 +1148,7 @@ namespace HSFUniverse
                 nmaxqdc = nmax;
                 mmaxqdc = mmax;
 
-                parent = hwm;
+                //parent = hwm;
             }
 
             public void gd2qd(double glat, double glon, out double qlat, out double qlon, out double f1e, out double f1n, out double f2e, out double f2n)
@@ -1181,17 +1167,17 @@ namespace HSFUniverse
                 if (glat != glatalf)
                 {
                     theta = (90 - glat) * deg2rad;
-                    alfbasis(nmax, mmax, theta, ref gpbar, ref gvbar, ref gwbar);
+                    alfbasis(nmax, mmax, theta, out gpbar, out gvbar, out gwbar);
                     glatalf = glat;
                 }
                 phi = glon * deg2rad;
 
 
                 i = 1;
-                for (n = 1; n <= nmax; n++)
+                for (n = 0; n <= nmax; n++)
                 {
-                    sh[i] = gpbar[n, 1];
-                    shgradtheta[i] = gvbar[n, 1] * normadj[n];
+                    sh[i] = gpbar[n+1, 1];
+                    shgradtheta[i] = gvbar[n+1, 1] * normadj[n+1];
                     shgradphi[i] = 0;
                     i = i + 1;
                 }
@@ -1200,14 +1186,14 @@ namespace HSFUniverse
                     mphi = m * phi;
                     cosmphi = Math.Cos(mphi);
                     sinmphi = Math.Sin(mphi);
-                    for (n = m + 1; n <= nmax; n++)
+                    for (n = m; n <= nmax; n++)
                     {
-                        sh[i] = gpbar[n, m] * cosmphi;
-                        sh[i + 1] = gpbar[n, m] * sinmphi;
-                        shgradtheta[i] = gvbar[n, m] * normadj[n] * cosmphi;
-                        shgradtheta[i + 1] = gvbar[n, m] * normadj[n] * sinmphi;
-                        shgradphi[i] = -gwbar[n, m] * normadj[n] * sinmphi;
-                        shgradphi[i + 1] = gwbar[n, m] * normadj[n] * cosmphi;
+                        sh[i] = gpbar[n+1, m + 1] * cosmphi;
+                        sh[i + 1] = gpbar[n + 1, m + 1] * sinmphi;
+                        shgradtheta[i] = gvbar[n + 1, m + 1] * normadj[n + 1] * cosmphi;
+                        shgradtheta[i + 1] = gvbar[n + 1, m + 1] * normadj[n + 1] * sinmphi;
+                        shgradphi[i] = -gwbar[n + 1, m + 1] * normadj[n + 1] * sinmphi;
+                        shgradphi[i + 1] = gwbar[n + 1, m + 1] * normadj[n + 1] * cosmphi;
                         i = i + 2;
                     }
                 }
@@ -1265,7 +1251,7 @@ namespace HSFUniverse
 
                 //COMPUTE MAGNETIC COORDINATES OF ANTI-SUNWARD DIRECTION
                 theta = (90 - asunglat) * deg2rad;
-                alfbasis(nmax, mmax, theta, ref spbar, ref svbar, ref swbar);
+                alfbasis(nmax, mmax, theta, out spbar, out svbar, out swbar);
                 phi = asunglon * deg2rad;
                 i = 1;
                 for (n = 0; n <= nmax; n++)
