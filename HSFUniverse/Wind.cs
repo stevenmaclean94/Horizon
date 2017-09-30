@@ -68,7 +68,6 @@ namespace HSFUniverse
         static Matrix<double> ycoeff;       //Coefficients for y coordinate
         static Matrix<double> zcoeff;          //Coefficients for z coordinate
         static Matrix<double> sh;              //Array to hold spherical harmonic fuctions
-        bool hwminit = true;
 
         int nmax0, mmax0;
         // static normalizational coeffiecents
@@ -78,13 +77,15 @@ namespace HSFUniverse
 
         public QWM qwm;
         public DWM dwm;
+
+
         public HWM()
         {
 
             int nmax0, mmax0;
 
-            qwm = new QWM();
-            dwm = new DWM(out nmaxdwm, out mmaxdwm);
+            qwm = new QWM(this);
+            dwm = new DWM(out nmaxdwm, out mmaxdwm, this);
 
             nmaxgeo = Math.Max(nmaxhwm, nmaxqdc);
             mmaxgeo = Math.Max(omaxhwm, mmaxqdc);
@@ -101,17 +102,6 @@ namespace HSFUniverse
             spbar = new Matrix<double>(nmaxgeo, mmaxgeo);
             svbar = new Matrix<double>(nmaxgeo, mmaxgeo);
             swbar = new Matrix<double>(nmaxgeo, mmaxgeo);
-
-
-            /*xcoeff = new Matrix<double>(1, nterm);
-            /ycoeff = new Matrix<double>(1, nterm);
-            zcoeff = new Matrix<double>(1, nterm);
-            sh = new Matrix<double>(1, nterm);
-            shgradtheta = new Matrix<double>(1, nterm);
-            shgradphi = new Matrix<double>(1, nterm);
-            normadj = new Matrix<double>(1, nmax0+1);
-            */
-            hwminit = false;
 
         }
         public Vector hwm14(int iyd, double sec, double alt, double glat, double glon, double stl, double f107a, double f107, Vector ap)
@@ -130,52 +120,46 @@ namespace HSFUniverse
 
             return w;
         }
-            public static void alfbasis(int nmax, int mmax, double theta, ref Matrix<double> P, ref Matrix<double> V, ref Matrix<double> W)
+        public static void alfbasis(int nmax, int mmax, double theta, ref Matrix<double> P, ref Matrix<double> V, ref Matrix<double> W)
+        {
+            // -------------------------------------------------------------
+            // routine to compute vector spherical harmonic basis functions
+            // -------------------------------------------------------------
+
+            int n, m;
+            double x, y;
+            double p00 = 0.70710678118654746;
+
+            P[1, 1] = p00;
+            x = Math.Cos(theta);
+            y = Math.Sin(theta);
+            for (m = 2; m <= mmax+1; m++)
             {
-                // -------------------------------------------------------------
-                // routine to compute vector spherical harmonic basis functions
-                // -------------------------------------------------------------
-
-                //integer[4], intent(in)  :: nmax, mmax
-                //real[8], intent(in)     :: theta
-                //real[8], intent(out)    :: P(0:nmax,0:mmax)
-                //real[8], intent(out)    :: V(0:nmax,0:mmax)
-                //real[8], intent(out)    :: W(0:nmax,0:mmax)
-
-                int n, m;
-                double x, y;
-                double p00 = 0.70710678118654746;
-
-                P[1, 1] = p00;
-                x = Math.Cos(theta);
-                y = Math.Sin(theta);
-                for (m = 2; m <= mmax+1; m++)
+                W[m, m] = cm[m] * P[m - 1, m - 1];
+                P[m, m] = y * en[m] * W[m, m];
+                for (n = m + 1; n <= nmax+1; n++)
                 {
-                    W[m, m] = cm[m] * P[m - 1, m - 1];
-                    P[m, m] = y * en[m] * W[m, m];
-                    for (n = m + 1; n <= nmax+1; n++)
-                    {
-                        W[n, m] = anm[n, m] * x * W[n - 1, m] - bnm[n, m] * W[n - 2, m];
-                        P[n, m] = y * en[n] * W[n, m];
-                        V[n, m] = narr[n] * x * W[n, m] - dnm[n, m] * W[n - 1, m];
-                        W[n - 2, m] = marr[m] * W[n - 2, m];
-                    }
-                    W[nmax, m] = marr[m] * W[nmax, m];
-                    W[nmax+1, m] = marr[m] * W[nmax+1, m];
-                    V[m, m] = x * W[m, m];
+                    W[n, m] = anm[n, m] * x * W[n - 1, m] - bnm[n, m] * W[n - 2, m];
+                    P[n, m] = y * en[n] * W[n, m];
+                    V[n, m] = narr[n] * x * W[n, m] - dnm[n, m] * W[n - 1, m];
+                    W[n - 2, m] = marr[m] * W[n - 2, m];
                 }
-                P[2,1] = anm[2,1] * x * P[1,1];
-                V[2,1] = -P[2,2];
-                for (n = 3; n <= nmax+1; n++)
-                {
-                    P[n, 1] = anm[n, 1] * x * P[n - 1, 1] - bnm[n, 1] * P[n - 2, 1];
-                    V[n, 1] = -P[n, 2];
-                }
-
-                //return;
-
+                W[nmax, m] = marr[m] * W[nmax, m];
+                W[nmax+1, m] = marr[m] * W[nmax+1, m];
+                V[m, m] = x * W[m, m];
             }
-            public void ALF(int nmaxin, int mmaxin)
+            P[2,1] = anm[2,1] * x * P[1,1];
+            V[2,1] = -P[2,2];
+            for (n = 3; n <= nmax+1; n++)
+            {
+                P[n, 1] = anm[n, 1] * x * P[n - 1, 1] - bnm[n, 1] * P[n - 2, 1];
+                V[n, 1] = -P[n, 2];
+            }
+
+            //return;
+
+        }
+        public void ALF(int nmaxin, int mmaxin)
             {
                 // -----------------------------------------------------
                 // routine to compute static normalization coeffiecents
@@ -265,7 +249,9 @@ namespace HSFUniverse
             Vector wavefactor = new Vector(new List<double>(new double[] { 1.0, 1.0, 1.0, 1.0 }));
             Vector tidefactor = new Vector(new List<double>(new double[] { 1.0, 1.0, 1.0, 1.0 }));
 
-            public QWM()
+            HWM parent;
+
+            public QWM(HWM hwm)
             {
                 int i, j;
 
@@ -323,8 +309,7 @@ namespace HSFUniverse
                 // change the initalization flag and reset some other things
 
                 previous = new Vector(new List<double>(new double[] { -1, -1, -1, -1, -1 }));
-                qwminit = false;
-                //qwmdefault = filename;
+                parent = hwm;
 
             }
             public Vector hwmqt(int IYD, double SEC, double ALT, double GLAT, double GLON, double STL, double F107A, double F107)
@@ -657,7 +642,7 @@ namespace HSFUniverse
 
                 return;
             }
-            public double bspline(int p, int m, Vector V, int i, double u)
+            public static double bspline(int p, int m, Vector V, int i, double u)
             {
                 Vector N = new Vector(p + 2);
                 double Vleft, Vright;
@@ -856,23 +841,12 @@ namespace HSFUniverse
 
             public static double sineps = 0.39781868;
             double deg2rad = Math.PI / 180;
-            bool dwminit = true;
-            string dwmdefault = "dwm07b104i.dat";
 
             gd2qdc gd;
+            HWM parent;
 
-            public DWM(out int nmaxout, out int mmaxout)
+            public DWM(out int nmaxout, out int mmaxout, HWM hwm)
             {
-                /*
-                call findandopen(dwmdefault,23)
-                read(23) nterm, mmax, nmax
-                allocate(termarr(0:2, 0:nterm - 1))
-                read(23) termarr
-                allocate(coeff(0:nterm - 1))
-                read(23) coeff
-                read(23) twidth
-                close(23)
-                */
                 nterm = HWMData.dwm.nterm;
                 mmax = HWMData.dwm.mmax;
                 nmax = HWMData.dwm.nmax;
@@ -889,9 +863,9 @@ namespace HSFUniverse
                 nmaxout = nmax;
                 mmaxout = mmax;
 
-                gd = new gd2qdc();
+                gd = new gd2qdc(hwm);
 
-                dwminit = false;
+                parent = hwm;
             }
             public Vector dwm07(int iyd, double sec, double alt, double glat, double glon, Vector ap)
             {
@@ -901,9 +875,7 @@ namespace HSFUniverse
                 double f1e, f1n, f2e, f2n;
                 double glatlast = 1.0e16, glonlast = 1.0e16;
                 double daylast = 1.0e16, utlast = 1.0e16, aplast = 1.0e16;
-                double talt = 125.0; //, twidth=5.0
-
-                //real[4], external::ap2kp, mltcalc
+                double talt = 125.0; 
 
                 //CONVERT AP TO KP
                 if (ap[2] != aplast)
@@ -953,13 +925,6 @@ namespace HSFUniverse
             private void Dwm07b(double mlt, double mlat, double kp, out double mmpwind, out double mzpwind)
             {
 
-                // real[4],intent(in)        :: mlt       //Magnetic local time(hours)
-                //real[4],intent(in)        :: mlat      //Magnetic latitude(degrees)
-                //real[4],intent(in)        :: kp        //3-hour Kp
-
-                //real[4],intent(out)       :: mmpwind   //Mer.disturbance wind(+north, QD coordinates)
-                //real[4],intent(out)       :: mzpwind   //Zon.disturbance wind(+east, QD coordinates)
-
                 // Local variables
                 int iterm, ivshterm, n, m;
                 Vector termvaltemp;
@@ -969,10 +934,6 @@ namespace HSFUniverse
                 double theta, phi, mphi;
                 mmpwind = 0;
                 mzpwind = 0;
-                //real[4],external::latwgt2
-
-                //LOAD MODEL PARAMETERS IF NECESSARY
-                //if (dwminit) call initdwm(nmaxdwm, mmaxdwm)
 
                 //COMPUTE LATITUDE PART OF VSH TERMS
                 if (mlat != mlatlast)
@@ -1161,14 +1122,11 @@ namespace HSFUniverse
 
             static double deg2rad = Math.PI / 180.0;
 
+            HWM parent;
 
-            bool gd2qdinit = true;
-
-
-            public gd2qdc()
+            public gd2qdc(HWM hwm)
             {
 
-                string datafile = "gd2qd.dat";
                 int iterm, n;
                 int j;
 
@@ -1204,11 +1162,7 @@ namespace HSFUniverse
                 nmaxqdc = nmax;
                 mmaxqdc = mmax;
 
-
-
-                gd2qdinit = false;
-
-
+                parent = hwm;
             }
 
             public void gd2qd(double glat, double glon, out double qlat, out double qlon, out double f1e, out double f1n, out double f2e, out double f2n)

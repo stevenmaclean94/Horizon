@@ -12,13 +12,8 @@ namespace HSFUniverse.Tests
     [TestFixture]
     public class WindTest
     {
-        [Test]
-        public void qwmInitializeTest()
-        {
-            HWM.QWM quiet = new HWM.QWM();
-        }
         [Test, TestCaseSource(typeof(AltTestData), "TestCases")]
-        public void TestAltitudeWind(double alt, Vector expectedWind)
+        public void TestAltitudeWind(Matrix<double> expected)
         {
             int day = 150;
             int iyd = 95000 + day;
@@ -30,8 +25,21 @@ namespace HSFUniverse.Tests
             Vector ap = new Vector(new List<double>(new double[] { 0, 80 }));
             //float ap = 80;
             HWM hwm = new HWM();
-            Vector wind = hwm.hwm14(iyd, sec, alt, glat, glon, stl, 100, 100, ap);
-            Assert.That(() => wind, Is.EqualTo(expectedWind).Within(.001));
+            Matrix<double> wind;
+            Matrix<double> result = new Matrix<double>();
+            for (int alt = 0; alt <= 400; alt += 25)
+            {
+                wind = hwm.hwm14(iyd, sec, alt, glat, glon, stl, 100, 100, ap);
+                Matrix<double> A = new Matrix<double>("[" + alt.ToString() + "]"); // FIXME: Add a proper Horzcat method
+                if (!result.IsNull())
+                    result.Vertcat(Matrix<double>.Horzcat(A, wind));
+                else
+                {
+                    result = new Matrix<double>(1, 3);
+                    result.SetRow(1, Matrix<double>.Horzcat(A, wind));
+                }
+            }
+            Assert.That(() => result, Is.EqualTo(expected).Within(.001));
         }
         [Test, TestCaseSource(typeof(BSplineData), "TestCases")]
         public void TestBSpline(double alt, int iz, Vector expected)
@@ -41,10 +49,11 @@ namespace HSFUniverse.Tests
             Vector vnode = HWMData.hwm.vnode;
             //double alt = 0;
             //int iz = 0;
-            HWM.QWM qwm = new HWM.QWM();
+            //HWM hwm = new HWM();
+            //HWM.QWM qwm = new HWM.QWM(hwm);
             Vector wght = new Vector(4);
             for(int i = 0; i<4; i++)
-                wght[i+1] = qwm.bspline(p, nnode, vnode, iz+i+1, alt);  // Add 1 to i because of OBO between Vector and Fortran code
+                wght[i+1] = HWM.QWM.bspline(p, nnode, vnode, iz+i+1, alt);  // Add 1 to i because of OBO between Vector and Fortran code
             Assert.That(() => wght, Is.EqualTo(expected).Within(.0001));
         }
         [Test]
@@ -97,7 +106,7 @@ namespace HSFUniverse.Tests
             });
 
         }
-        [Test]//, TestCaseSource(typeof(ParityData), "TestCases")]
+        [Test]
         public void TestParity()
         {
             Matrix<double> mparmExpected = new Matrix<double>(new double[,] {{ 0.5863076, -2.2222567, -4.9251938, -19.4778709, -19.7718067, -3.1672986, 1.5175344, 0.9337960, 0.2037565, -2.3716090, -5.1037636, -13.3650036, -15.5804758, -17.0713634, -18.4213257, -9.9815340, -0.3448336, 1.1700991, -14.8207817, -16.5646992, -8.8171062, -5.3943291, -8.7685575, -4.2562594, 19.6645546, 27.1241322, 24.8056374, 17.4891453, 17.1400509, 8.3790445, 0.0000000, 0.0000000, 0.0000000, 0.0000000 },
@@ -1700,12 +1709,12 @@ namespace HSFUniverse.Tests
  { 0.0565007,    0.1908758,   -0.2800270,    0.0564241,    0.2752052,   -0.3192591,    0.3190205,   -0.0154569,    0.2152790,   -0.1046067,    0.4232970,   -0.4740555,    0.3834203,    0.1388496,    0.5355759,   -0.7471193,    0.3621303,   -0.5670998,   -0.2333311,   -0.1092183,    0.8417803,    0.9326304,   -2.0515642,   -1.1064535,    2.0451188,    3.4566247,    1.6028293,    5.4301105,    0.7423253,   -1.5370400,    0.0000000,    0.0000000,    0.0000000,    0.0000000},
  {-0.0071842,    0.1550533,   -0.1278750,   -0.1921071,    0.2129900,   -0.0437967,   -0.1885450,    0.2110913,   -0.3659487,    0.3156374,   -0.6490648,    0.2735505,    0.8296225,    0.8451664,    0.8699536,    1.0318311,   -0.0031565,    0.6323924,   -0.4860141,   -0.6834836,    1.6345974,    0.2840827,   -0.2616287,    1.4771146,    4.0539207,   -0.6631048,   -2.1384664,    0.1462065,   -0.9546173,    3.0507755,    0.0000000,    0.0000000,    0.0000000,    0.0000000},
  { 0.0721763,    0.0412892,    0.1197755,   -0.2841238,    0.0079589,   -0.1820920,   -0.2325907,    0.1426038,   -0.1413833,    0.1869863,   -0.1221280,    1.0369841,   -0.1742377,    1.7329130,    0.7082180,    0.2907278,   -0.0078680,   -0.1887466,   -1.3879291,    0.6807849,   -1.9459335,    2.6266627,    2.4885340,    0.3261619,   -1.8312551,    1.8487436,   -2.8675351,    1.9862257,    0.9071906,   -1.7036620,    0.0000000,    0.0000000,    0.0000000,    0.0000000}});
-            HWM.QWM hwm = new HWM.QWM();
-
+            HWM hwm = new HWM();
+            HWM.QWM qwm = new HWM.QWM(hwm);
             Assert.Multiple(() =>
             {
-                Assert.That(() => hwm.tparm, Is.EqualTo(tparmExpected).Within(.0001));
-                Assert.That(() => hwm.mparm, Is.EqualTo(mparmExpected).Within(.0001));
+                Assert.That(() => qwm.tparm, Is.EqualTo(tparmExpected).Within(.0001));
+                Assert.That(() => qwm.mparm, Is.EqualTo(mparmExpected).Within(.0001));
             });
         }
         [Test]
@@ -1734,56 +1743,23 @@ namespace HSFUniverse.Tests
         {
             get
             {
-                yield return new TestCaseData(0,
-                    new Vector(new List<double>(new double[] { 0.031, 6.271 })));
-
-                yield return new TestCaseData(25,
-                    new Vector(new List<double>(new double[] { 2.965, 25.115 })));
-
-                yield return new TestCaseData(50,
-                    new Vector(new List<double>(new double[] {-6.627, 96.343 })));
-
-                yield return new TestCaseData(75,
-                    new Vector(new List<double>(new double[] { 2.238, 44.845 })));
-
-                yield return new TestCaseData(100,
-                    new Vector(new List<double>(new double[] {-14.253,  31.590 })));
-
-                yield return new TestCaseData(125,
-                    new Vector(new List<double>(new double[] { 37.403,  11.628 })));
-
-                yield return new TestCaseData(150,
-                    new Vector(new List<double>(new double[] { 42.789, -33.319 })));
-
-                yield return new TestCaseData(175,
-                    new Vector(new List<double>(new double[] { 20.278, -49.984 })));
-
-                yield return new TestCaseData(200,
-                    new Vector(new List<double>(new double[] { 25.027, -68.588 })));
-
-                yield return new TestCaseData(225,
-                    new Vector(new List<double>(new double[] { 34.297, -80.022 })));
-
-                yield return new TestCaseData(250,
-                    new Vector(new List<double>(new double[] { 40.408, -87.560 })));
-
-                yield return new TestCaseData(275,
-                    new Vector(new List<double>(new double[] { 44.436, -92.530 })));
-
-                yield return new TestCaseData(300,
-                    new Vector(new List<double>(new double[] { 47.092, -95.806 })));
-
-                yield return new TestCaseData(325,
-                    new Vector(new List<double>(new double[] { 48.843, -97.965 })));
-
-                yield return new TestCaseData(350,
-                    new Vector(new List<double>(new double[] { 49.997, -99.389 })));
-
-                yield return new TestCaseData(375,
-                    new Vector(new List<double>(new double[] { 50.758, -100.327 })));
-
-                yield return new TestCaseData(400,
-                    new Vector(new List<double>(new double[] { 51.259, -100.946 })));
+                yield return new TestCaseData(new Matrix<double>(new double[,] {{  0,   0.031,    6.271 },
+                                                                                { 25,   2.965,   25.115 },
+                                                                                { 50,  -6.627,   96.343 },
+                                                                                { 75,   2.238,   44.845 },
+                                                                                {100, -14.253,   31.590 },
+                                                                                {125,  37.403,   11.628 },
+                                                                                {150,  42.789,  -33.319 },
+                                                                                {175,  20.278,  -49.984 },
+                                                                                {200,  25.027,  -68.588 },
+                                                                                {225,  34.297,  -80.022 },
+                                                                                {250,  40.408,  -87.560 },
+                                                                                {275,  44.436,  -92.530 },
+                                                                                {300,  47.092,  -95.806 },
+                                                                                {325,  48.843,  -97.965 },
+                                                                                {350,  49.997,  -99.389 },
+                                                                                {375,  50.758, -100.327 },
+                                                                                {400,  51.259, -100.946 }}));
             }
         }
     }
