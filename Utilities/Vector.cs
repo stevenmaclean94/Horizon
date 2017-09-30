@@ -50,6 +50,11 @@ namespace Utilities
             Length = elements.Count;
             _elements = elements;
         }
+        public Vector(double[] elements)
+        {
+            Length = elements.Length;
+            _elements = new Vector(new List<double>(elements))._elements;
+        }
         public Vector(string VectorString)
         {
             string[] elements = VectorString.Split(';');
@@ -394,6 +399,22 @@ namespace Utilities
         #endregion
 
         #region Dynamics
+
+
+
+        /// <summary>
+        /// Converts a Matrix<T> to an array of T type numbers
+        /// </summary>
+        /// <returns></returns>
+        public double[] ToArray()
+        {
+            double[] Array = new double[Length];
+
+            for (int r = 0; r < Length; r++)
+                    Array[r] = this[r + 1];
+
+            return Array;
+        }
         /// <summary>
         /// Returns true if all elements of the Matrix are real
         /// </summary>
@@ -539,7 +560,7 @@ namespace Utilities
 
         public object Clone() // ICloneable
         {
-            Vector m = new Vector(3); //TODO: Why was there a ToArray? 
+            Vector m = new Vector(ToArray()); 
             return m;
         }
 
